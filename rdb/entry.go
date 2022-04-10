@@ -11,7 +11,8 @@ type rdbCmd interface {
 }
 
 type baseCmd interface {
-	ZRangePop(ctx context.Context, key string, start, stop int64) *redis.StringSliceCmd
-	ZRangeWithScoresPop(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd
-	ZRangeByScorePop(ctx context.Context, key string, opt *redis.ZRangeBy) *redis.StringSliceCmd
+	ZRangePop(ctx context.Context, key string, start, stop int64) (result []string, err error)
+	ZRangeWithScoresPop(ctx context.Context, key string, start, stop int64) (result []redis.Z, err error)
+	ZRangeByScorePop(ctx context.Context, key string, opt *redis.ZRangeBy) (result []string, err error)
+	ZRangeByScoreWithScoresPop(ctx context.Context, key string, opt *redis.ZRangeBy) (result []redis.Z, err error)
 }
