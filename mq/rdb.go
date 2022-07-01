@@ -34,16 +34,15 @@ func NewRedisMQ(ctx context.Context, client *redis.Client) MQueue {
 func (R *RMQ) Register(topics ...string) error {
 
 	for _, topic := range topics {
-		R.mutex.Lock()
+		R.mutex.RLock()
 		R.handlers[topic] = nil
-		R.mutex.Unlock()
+		R.mutex.RUnlock()
 	}
 	return nil
 }
 
 // Publish 发布消息
 func (R *RMQ) Publish(topic string, msgs ...interface{}) error {
-
 	//必须注册了才能发布
 	if _, ok := R.handlers[topic]; !ok {
 		return errors.New("topic not register")
@@ -73,7 +72,9 @@ func (R *RMQ) Subscribe(topic string, handler Handler) error {
 		//已被注册过
 		return errors.New("topic already register")
 	}
+	R.mutex.RLock()
 	R.handlers[topic] = handler
+	R.mutex.RUnlock()
 	return nil
 }
 func (R *RMQ) daemonServer() error {
