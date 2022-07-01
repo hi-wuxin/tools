@@ -9,7 +9,6 @@ import (
 	"log"
 	"runtime/debug"
 	"sync"
-	"time"
 )
 
 type RMQ struct {
@@ -17,8 +16,6 @@ type RMQ struct {
 	cmd      *redis.Client
 	mutex    *sync.RWMutex
 	handlers map[string]Handler
-	//热重载定时器
-	reload *time.Ticker
 }
 
 func NewRedisMQ(ctx context.Context, client *redis.Client) MQueue {
@@ -27,7 +24,6 @@ func NewRedisMQ(ctx context.Context, client *redis.Client) MQueue {
 		cmd:      client,
 		mutex:    &sync.RWMutex{},
 		handlers: make(map[string]Handler, 0),
-		reload:   time.NewTicker(time.Minute * 10),
 	}
 }
 
@@ -44,9 +40,9 @@ func (R *RMQ) Register(topics ...string) error {
 // Publish 发布消息
 func (R *RMQ) Publish(topic string, msgs ...interface{}) error {
 	//必须注册了才能发布
-	if _, ok := R.handlers[topic]; !ok {
-		return errors.New("topic not register")
-	}
+	//if _, ok := R.handlers[topic]; !ok {
+	//	return errors.New("topic not register")
+	//}
 	data := make([]interface{}, len(msgs))
 	for _, msg := range msgs {
 		body, _ := json.Marshal(Body{Raw: msg})
@@ -98,9 +94,6 @@ func (R *RMQ) work(topic string, handler Handler) {
 	for {
 		select {
 		//终止处理
-		case <-R.reload.C:
-			return
-			//终止处理
 		case <-R.ctx.Done():
 			return
 		case <-sub.Channel():
